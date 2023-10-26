@@ -107,7 +107,7 @@ const initialize = () => {
     temporaryGrid = initializeArray(width / pixelSize, height / pixelSize);
     for (let x = 0; x < width / pixelSize; x++) {
         for (let y = 0; y < height / pixelSize; y++) {
-            if (Math.random() > 0.55) {
+            if (Math.random() > 0.45) {
                 grid[x][y] = 1;
             }
         }
