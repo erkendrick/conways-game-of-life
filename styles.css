@@ -16,7 +16,7 @@ header {
 }
 
 button#reset {
-    background-color: rgb(68, 68, 207); /* Customize the button's background color */
+    background-color: rgb(68, 68, 207); 
     color: white;
     border: 1px solid white;
     border-radius: 10%;
