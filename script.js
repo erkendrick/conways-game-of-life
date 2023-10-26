@@ -5,6 +5,7 @@ document.getElementById("game").height = window.innerHeight;
 const width = document.getElementById("game").width;
 const height = document.getElementById("game").height;
 const pixelSize = 5;
+const timeoutInterval = 40;
 let animationTimeoutId = null;
 
 const draw = (x, y, c, s) => {
@@ -86,11 +87,7 @@ const update = () => {
     // if (((width / pixelSize) * (height / pixelSize)) / cnt > 95) {
     //     initialize();
     // }
-
-    
-        animationTimeoutId = setTimeout(update, 25);
-    
-    
+        animationTimeoutId = setTimeout(update, timeoutInterval);
 }
 
 const initializeArray = (w, h) => {
@@ -115,7 +112,7 @@ const initialize = () => {
             }
         }
     }
-    animationTimeoutId = setTimeout(update, 25);
+    animationTimeoutId = setTimeout(update, timeoutInterval);
 }
 
 document.getElementById("game").addEventListener("click", (e) => {
@@ -129,7 +126,6 @@ document.getElementById("game").addEventListener("click", (e) => {
         for (let j = -2; j <= 2; j++) {
             const newX = x + i;
             const newY = y + j;
-
             
             if (newX >= 0 && newX < grid.length && newY >= 0 && newY < grid[0].length) {
                 grid[newX][newY] = 1;
