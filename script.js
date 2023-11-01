@@ -1,12 +1,12 @@
-
 const gameCanvas = document.getElementById("game").getContext("2d");
 document.getElementById("game").width = window.innerWidth;
 document.getElementById("game").height = window.innerHeight;
 const width = document.getElementById("game").width;
 const height = document.getElementById("game").height;
 const pixelSize = 5;
-const timeoutInterval = 40;
-let animationTimeoutId = null;
+const timeoutInterval = 50;
+const spawnProbability = 0.25;
+
 
 const draw = (x, y, c, s) => {
     gameCanvas.fillStyle = c;
@@ -55,39 +55,42 @@ const countNeighbors = (x, y) => {
 
 const updateCell = (x, y) => {
     neighbor = countNeighbors(x, y);
-    if (neighbor > 4 || neighbor < 3) {
-        return 0;
+    //Conway 
+    if (grid[x][y] === 1 && (neighbor == 2 || neighbor == 3)) {
+        return 1;
     }
+
     if (grid[x][y] == 0 && neighbor == 3) {
         return 1;
     }
-    return grid[x][y];
+
+    return 0;
 }
 
 const update = () => {
     gameCanvas.clearRect(0, 0, width, height);
     draw(0, 0, "black", width);
+    temporaryGrid = initializeArray(width / pixelSize, height / pixelSize);
+    
     for (let x = 0; x < width / pixelSize; x++) {
         for (let y = 0; y < height / pixelSize; y++) {
             temporaryGrid[x][y] = updateCell(x, y);
         }
     }
+    
     grid = temporaryGrid;
-    //let cnt = 0;
+    
     for (let x = 0; x < width / pixelSize; x++) {
         for (let y = 0; y < height / pixelSize; y++) {
             if (grid[x][y]) {
-                draw(x * pixelSize, y * pixelSize, `rgb(${x}, ${y}, 100)`, pixelSize)
-                //cnt += 1;
+                draw(x * pixelSize, y * pixelSize, `rgb(${x}, ${y}, 255)`, pixelSize)
             }
         }
-    }
+    }  
 
-    // use cnt and condition below to auto-initialize when percentage of dead cells is > 95
-    // if (((width / pixelSize) * (height / pixelSize)) / cnt > 95) {
-    //     initialize();
-    // }
-        animationTimeoutId = setTimeout(update, timeoutInterval);
+   
+   animationHandle = requestAnimationFrame(update);
+
 }
 
 const initializeArray = (w, h) => {
@@ -102,17 +105,17 @@ const initializeArray = (w, h) => {
 }
 
 const initialize = () => {
-    
     grid = initializeArray(width / pixelSize, height / pixelSize);
-    temporaryGrid = initializeArray(width / pixelSize, height / pixelSize);
+    
     for (let x = 0; x < width / pixelSize; x++) {
         for (let y = 0; y < height / pixelSize; y++) {
-            if (Math.random() > 0.45) {
+            if (Math.random() > spawnProbability) {
                 grid[x][y] = 1;
             }
         }
     }
-    animationTimeoutId = setTimeout(update, timeoutInterval);
+   
+    requestAnimationFrame(update);
 }
 
 document.getElementById("game").addEventListener("click", (e) => {
@@ -121,15 +124,16 @@ document.getElementById("game").addEventListener("click", (e) => {
     const x = Math.floor(mouseX / pixelSize);
     const y = Math.floor(mouseY / pixelSize);
 
-     // set a cluster of live cells
-     for (let i = -2; i <= 2; i++) {
+    // set a cluster of live cells
+    for (let i = -2; i <= 2; i++) {
         for (let j = -2; j <= 2; j++) {
             const newX = x + i;
             const newY = y + j;
-            
+
+
             if (newX >= 0 && newX < grid.length && newY >= 0 && newY < grid[0].length) {
                 grid[newX][newY] = 1;
-                draw(newX * pixelSize, newY * pixelSize, `rgb(${x}, ${y}, 100)`, pixelSize);
+                draw(newX * pixelSize, newY * pixelSize, `rgb(${x}, ${y}, 0)`, pixelSize);
             }
         }
     }
@@ -137,10 +141,13 @@ document.getElementById("game").addEventListener("click", (e) => {
 
 initialize();
 
+let animationHandle;
+
 const cancelAnimation = () => {
-    if (animationTimeoutId) {
-        clearTimeout(animationTimeoutId);
-    }
+   if (animationHandle) {
+    cancelAnimationFrame(animationHandle);
+    animationHandle = null;
+   }
 }
 
 const resetButton = document.getElementById("reset");
