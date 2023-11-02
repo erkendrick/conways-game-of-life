@@ -4,9 +4,8 @@ document.getElementById("game").height = window.innerHeight;
 const width = document.getElementById("game").width;
 const height = document.getElementById("game").height;
 const pixelSize = 5;
-const timeoutInterval = 50;
-const spawnProbability = 0.25;
-
+const spawnProbability = 0;
+const targetFPS = 24;
 
 const draw = (x, y, c, s) => {
     gameCanvas.fillStyle = c;
@@ -17,49 +16,37 @@ let grid = [];
 let temporaryGrid = [];
 
 const cellValue = (x, y) => {
-    try {
-        return grid[x][y];
-    } catch {
-        return 0;
-    }
+    x = (x + width / pixelSize) % (width / pixelSize);
+    y = (y + height / pixelSize) % (height / pixelSize);
+
+    return grid[x][y];
 }
 
 const countNeighbors = (x, y) => {
     let count = 0;
-    if (cellValue(x - 1, y)) {
-        count++;
+
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+            if (dx === 0 && dy === 0) {
+                continue;
+            }
+            count += cellValue(x + dx, y + dy);
+        }
     }
-    if (cellValue(x + 1, y)) {
-        count++;
-    }
-    if (cellValue(x, y - 1)) {
-        count++;
-    }
-    if (cellValue(x, y + 1)) {
-        count++;
-    }
-    if (cellValue(x - 1, y - 1)) {
-        count++;
-    }
-    if (cellValue(x + 1, y - 1)) {
-        count++;
-    }
-    if (cellValue(x - 1, y + 1)) {
-        count++;
-    }
-    if (cellValue(x + 1, y + 1)) {
-        count++;
-    }
+
     return count;
 }
 
+
+//Conway ruleset
 const updateCell = (x, y) => {
     neighbor = countNeighbors(x, y);
-    //Conway 
-    if (grid[x][y] === 1 && (neighbor == 2 || neighbor == 3)) {
+    if (grid[x][y] == 1 && (neighbor == 2 || neighbor == 3)) {
         return 1;
     }
-
+    if (grid[x][y] == 1 && (neighbor < 2 || neighbor > 3)) {
+        return 0;
+    }
     if (grid[x][y] == 0 && neighbor == 3) {
         return 1;
     }
@@ -67,30 +54,40 @@ const updateCell = (x, y) => {
     return 0;
 }
 
-const update = () => {
-    gameCanvas.clearRect(0, 0, width, height);
-    draw(0, 0, "black", width);
-    temporaryGrid = initializeArray(width / pixelSize, height / pixelSize);
-    
-    for (let x = 0; x < width / pixelSize; x++) {
-        for (let y = 0; y < height / pixelSize; y++) {
-            temporaryGrid[x][y] = updateCell(x, y);
-        }
+
+
+
+const update = (timestamp) => {
+    if (!update.lastTimestamp) {
+        update.lastTimestamp = timestamp;
     }
-    
-    grid = temporaryGrid;
-    
-    for (let x = 0; x < width / pixelSize; x++) {
-        for (let y = 0; y < height / pixelSize; y++) {
-            if (grid[x][y]) {
-                draw(x * pixelSize, y * pixelSize, `rgb(${x}, ${y}, 255)`, pixelSize)
+    const deltaTime = timestamp - update.lastTimestamp;
+
+    if (deltaTime >= 1000 / targetFPS) {
+        gameCanvas.clearRect(0, 0, width, height);
+        draw(0, 0, "black", width);
+        temporaryGrid = initializeArray(width / pixelSize, height / pixelSize);
+
+        for (let x = 0; x < width / pixelSize; x++) {
+            for (let y = 0; y < height / pixelSize; y++) {
+                temporaryGrid[x][y] = updateCell(x, y);
             }
         }
-    }  
 
-   
-   animationHandle = requestAnimationFrame(update);
+        grid = temporaryGrid;
 
+        for (let x = 0; x < width / pixelSize; x++) {
+            for (let y = 0; y < height / pixelSize; y++) {
+                if (grid[x][y]) {
+                    draw(x * pixelSize, y * pixelSize, `rgb(${x / 2}, ${y / 2}, 255)`, pixelSize)
+                }
+            }
+        }
+
+        update.lastTimestamp = timestamp;
+    }
+
+    animationHandle = requestAnimationFrame(update);
 }
 
 const initializeArray = (w, h) => {
@@ -106,7 +103,7 @@ const initializeArray = (w, h) => {
 
 const initialize = () => {
     grid = initializeArray(width / pixelSize, height / pixelSize);
-    
+
     for (let x = 0; x < width / pixelSize; x++) {
         for (let y = 0; y < height / pixelSize; y++) {
             if (Math.random() > spawnProbability) {
@@ -114,7 +111,7 @@ const initialize = () => {
             }
         }
     }
-   
+
     requestAnimationFrame(update);
 }
 
@@ -144,10 +141,10 @@ initialize();
 let animationHandle;
 
 const cancelAnimation = () => {
-   if (animationHandle) {
-    cancelAnimationFrame(animationHandle);
-    animationHandle = null;
-   }
+    if (animationHandle) {
+        cancelAnimationFrame(animationHandle);
+        animationHandle = null;
+    }
 }
 
 const resetButton = document.getElementById("reset");
